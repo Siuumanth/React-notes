@@ -1,3 +1,68 @@
+## 🔄 What is **Render** in React?
+
+**Rendering** in React means:
+
+> **Converting your component’s JSX into actual DOM elements** on the web page.
+
+Whenever a component:
+- is shown for the first time, or
+- its **state/props** change,
+
+React calls the component function again to calculate what the UI should look like, and then **re-renders** (updates) the actual DOM if anything changed.
+
+> React uses a **virtual DOM** to compare changes and update the **real DOM efficiently**.
+**Example**: Clicking a button that updates state will cause a re-render.
+
+---
+
+## 🟢 What is **Mounting**?
+
+Mounting means:
+
+> The **first time** a React component is **created and inserted** into the DOM.
+
+This includes:
+- Running the component’s function
+- Setting up internal state
+- Attaching it to the DOM
+
+### In `useEffect`:
+
+
+`useEffect(() => {   console.log("Mounted"); }, []);`
+
+This runs **only once**, after the component is mounted (because of the empty dependency array).
+
+---
+
+## 🔴 What is **Unmounting**?
+
+Unmounting means:
+
+> The component is **removed** from the DOM.
+
+React will:
+
+- Delete the DOM elements for that component
+- Clean up any resources like intervals, subscriptions, or event listeners
+
+### In `useEffect`:
+
+`useEffect(() => {   return () => {     console.log("Unmounted");   }; }, []);`
+
+The function inside `return` is the **cleanup function** — it runs **just before** the component is removed.
+
+---
+
+## ✅ Summary Table
+
+| Term    | Meaning                                         | Triggered When?                                             |
+| ------- | ----------------------------------------------- | ----------------------------------------------------------- |
+| Render  | JSX is converted to DOM and updates are applied | On first mount and every state/props update                 |
+| Mount   | Component is created and added to DOM           | When component first appears                                |
+| Unmount | Component is removed from DOM                   | \| When you hide, navigate away, or conditionally remove it |
+|         |                                                 |                                                             |
+
 ## React Hooks - Detailed Notes
 
 ### What Are Hooks?
@@ -44,51 +109,130 @@ function Counter() {
 
 ---
 
-#### 2. `useEffect`
+## 2. `useEffect`
 
-**Purpose**: To perform side effects like data fetching, setting up subscriptions, or timers.
+### 🌀 React `useEffect` Hook – Canvas Layout
+
+
+## ✅ What is `useEffect`?
+
+> `useEffect` is a built-in **React Hook** that lets you perform **side effects** in function components.
+
+### ⚡ What are Side Effects?
+
+- Fetching API data
+- Setting up timers/intervals
+- Subscribing to events or data streams
+- Manually modifying the DOM
+- Adding/removing event listeners
+
+### 📜 In Class Components (Before Hooks)
+
+- `componentDidMount`
+- `componentDidUpdate`
+- `componentWillUnmount`
+
+Now all handled in **one unified API**: `useEffect`.
+---
+
+## 🧠 Syntax
 
 ```jsx
-import React, { useState, useEffect } from 'react';
+useEffect(() => {
+  // Side-effect logic (e.g., API calls, setting up timers)
 
-function Timer() {
-  const [seconds, setSeconds] = useState(0);
+  return () => {
+    // Cleanup logic (e.g., clearInterval, remove event listeners) () optional 
+  };
+}, [dependencies]);
 
-  useEffect(() => {
-    // Start a timer that increments 'seconds' every 1 second
-    const interval = setInterval(() => {
-      setSeconds(s => s + 1);
-    }, 1000);
 
-    // Cleanup: clear interval when component unmounts
-    return () => clearInterval(interval);
-  }, []); // Run only once when component mounts
-
-  return <p>Timer: {seconds}s</p>;
-}
 ```
-
-**Explanation**: The `useEffect` hook sets up a timer when the component mounts. It updates the `seconds` value every second. The cleanup function (`clearInterval`) ensures that the timer is stopped when the component unmounts.
 
 ---
 
-#### 3. `useContext`
+## 📌 Variants of `useEffect`
 
-**Purpose**: To access values from React Context directly without `<Context.Consumer>`.
+### 1️⃣ No Dependency Array
 
 ```jsx
-import React, { useContext } from 'react';
+useEffect(() => {
+  console.log("Runs every render");
+});
 
-const ThemeContext = React.createContext('light');
-
-function ThemedComponent() {
-  // Get current theme value from ThemeContext
-  const theme = useContext(ThemeContext);
-  return <div>Current theme: {theme}</div>;
-}
 ```
 
-**Explanation**: `useContext` retrieves the current context value (`'light'` by default) from `ThemeContext`. This enables easy access to shared global state.
+- Runs **on every render**
+- Cleanup runs **before next effect**
+- ⚠️ Can lead to performance issues
+
+---
+
+### 2️⃣ Empty Dependency Array `[]`
+
+```jsx
+useEffect(() => {
+  console.log("Effect ran once after initial render");
+
+  return () => {
+    console.log("Cleanup on unmount");
+  };
+}, []);
+
+```
+
+- Runs **only once**, after first render
+- Cleanup runs **only once**, on unmount
+- Equivalent to `componentDidMount` + `componentWillUnmount`
+
+---
+
+### 3️⃣ With Specific Dependencies
+
+```jsx
+useEffect(() => {
+  console.log("Effect ran because 'count' changed");
+
+  return () => {
+    console.log("Cleanup before effect re-runs or on unmount");
+  };
+}, [count]);
+
+```
+
+
+- Runs on **first render** and when any dependency changes
+- Cleanup runs **before the effect re-runs** or on **unmount**
+    
+
+---
+
+## 🧹 Why Cleanup Is Important
+
+To prevent:
+
+- 🧠 **Memory leaks**
+- 🧪 **Unexpected side-effects**
+- 🕸️ **Timers/event handlers stacking up**
+
+### ✅ Good Cleanup Example:
+
+```jsx
+useEffect(() => {
+  const interval = setInterval(() => {
+    console.log("Tick");
+  }, 1000);
+
+  return () => {
+    clearInterval(interval); // ✅ Prevents memory leaks
+  };
+}, []);
+```
+
+### 🔍 What Happens Without Dependencies?
+
+- The effect runs after **every render**, not just reload.
+- Cleanup runs **before each new effect**, preventing stacking side effects.
 
 ---
 
